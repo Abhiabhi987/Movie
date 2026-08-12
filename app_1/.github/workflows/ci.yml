@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies for inventory
+        working-directory: app_1/services/inventory
+        run: npm ci
+      - name: Install dependencies for booking
+        working-directory: app_1/services/booking
+        run: npm ci
+      - name: Install dependencies for payment
+        working-directory: app_1/services/payment-stub
+        run: npm ci

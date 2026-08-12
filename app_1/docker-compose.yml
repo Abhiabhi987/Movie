@@ -1,0 +1,63 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: movie_app1_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-app1:/data
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: movie_app1_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: movie
+    ports:
+      - "5433:5432" # use alternate host port to avoid local conflicts
+    volumes:
+      - pg-data-app1:/var/lib/postgresql/data
+
+  inventory:
+    build: ./services/inventory
+    container_name: movie_app1_inventory
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "3001:3001"
+
+  booking:
+    build: ./services/booking
+    container_name: movie_app1_booking
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - PAYMENT_WEBHOOK_URL=http://booking:3002/payments/webhook
+    depends_on:
+      - redis
+      - postgres
+      - payment
+    ports:
+      - "3002:3002"
+
+  payment:
+    build: ./services/payment-stub
+    container_name: movie_app1_payment
+    environment:
+      - BOOKING_WEBHOOK_URL=http://booking:3002/payments/webhook
+    ports:
+      - "3003:3003"
+
+volumes:
+  redis-data-app1:
+  pg-data-app1:
