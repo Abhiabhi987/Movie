@@ -204,7 +204,8 @@ app.post('/holds/:id/release', async (req, res) => {
   const pipeline = redis.multi();
   for await (const key of stream) {
     const val = await redis.get(key);
-    if (val && val:startsWith && typeof val === 'string' && val.startsWith(`HELD:${hold_id}:`)) {
+    // Safely check that val is a string and starts with the expected prefix
+    if (val && typeof val === 'string' && val.startsWith(`HELD:${hold_id}:`)) {
       pipeline.set(key, 'AVAILABLE');
     }
   }
@@ -218,9 +219,6 @@ app.post('/holds/:id/release', async (req, res) => {
 
   res.json({ released: true });
 });
-
-// Utility helper to detect string startsWith safely for older Node versions
-String.prototype.startsWith = String.prototype.startsWith || function (s) { return this.indexOf(s) === 0; };
 
 const PORT = process.env.PORT || 3001;
 (async () => {
