@@ -20,6 +20,26 @@ services:
     volumes:
       - pg-data-app1:/var/lib/postgresql/data
 
+  db-init:
+    image: node:18-alpine
+    container_name: movie_app1_db_init
+    working_dir: /app
+    volumes:
+      - ./app_1:/app
+    command: ["node", "tools/db-init/init.js"]
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=movie
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - postgres
+    restart: "no"
+
   inventory:
     build: ./services/inventory
     container_name: movie_app1_inventory
@@ -28,9 +48,13 @@ services:
       - REDIS_PORT=6379
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=movie
     depends_on:
       - redis
       - postgres
+      - db-init
     ports:
       - "3001:3001"
 
@@ -42,10 +66,14 @@ services:
       - REDIS_PORT=6379
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=movie
       - PAYMENT_WEBHOOK_URL=http://booking:3002/payments/webhook
     depends_on:
       - redis
       - postgres
+      - db-init
       - payment
     ports:
       - "3002:3002"
